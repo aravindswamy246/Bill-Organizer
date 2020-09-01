@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/idHomeNavFrag"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".HomeFragment">
+
+    <GridView
+        android:id="@+id/idHomeGridView"
+        android:layout_width="412dp"
+        android:layout_height="627dp"
+        android:layout_alignParentStart="false"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="false"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="50dp"
+        android:layout_marginLeft="200dp"
+        android:layout_marginTop="200dp"
+        android:layout_marginEnd="0dp"
+        android:layout_marginRight="0dp"
+        android:layout_marginBottom="0dp"
+        android:numColumns="2"
+        android:verticalSpacing="10dp"
+        tools:ignore="AdapterViewChildren,UselessParent" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/idUploadFloatBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="257dp"
+            android:layout_marginLeft="@dimen/stdUploadFloatBtnLMLeft"
+            android:layout_marginTop="@dimen/stdUploadFloatBtnLMTop"
+            android:layout_marginBottom="@dimen/stdUploadFloatBtnLMBottom"
+            android:clickable="true"
+            android:focusable="true"
+            android:src="@drawable/upload"
+            app:fabSize="auto"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:rippleColor="#E80B0B" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/idCameraFloatBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="257dp"
+            android:layout_marginLeft="@dimen/stdUploadFloatBtnLMLeft"
+            android:layout_marginTop="@dimen/stdCameraFloatBtnLMTop"
+            android:layout_marginBottom="@dimen/stdUploadFloatBtnLMBottom"
+            android:clickable="true"
+            android:focusable="true"
+            android:src="@drawable/ic_action_camera"
+            android:visibility="invisible"
+            app:fabSize="auto"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:rippleColor="#E80B0B" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/idAlbumFloatBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="257dp"
+            android:layout_marginLeft="@dimen/stdUploadFloatBtnLMLeft"
+            android:layout_marginTop="@dimen/stdAlbumFloatBtnLMTop"
+            android:layout_marginBottom="@dimen/stdUploadFloatBtnLMBottom"
+            android:clickable="true"
+            android:focusable="true"
+            android:src="@drawable/ic_action_album"
+            android:visibility="invisible"
+            app:fabSize="auto"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:rippleColor="#E80B0B" />
+
+        <TextView
+            android:id="@+id/idCameraTV"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/picTxt_LMLeft"
+            android:layout_marginTop="@dimen/stdCameraTxt_LMTop"
+            android:text="@string/cam"
+            android:textColor="#000000"
+            android:textSize="@dimen/stdUploadFloatBtnTexts"
+            android:visibility="invisible"
+            tools:ignore="RtlHardcoded" />
+
+        <TextView
+            android:id="@+id/idAlbumTV"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/picTxt_LMLeft"
+            android:layout_marginTop="@dimen/stdAlbumTxt_LMTop"
+            android:text="@string/album"
+            android:textColor="#000000"
+            android:textSize="@dimen/stdUploadFloatBtnTexts"
+            android:visibility="invisible"
+            tools:ignore="RtlHardcoded" />
+
+        <!--        <ImageView-->
+        <!--            android:id="@+id/idBillImgs"-->
+        <!--            android:layout_width="199dp"-->
+        <!--            android:layout_height="186dp"-->
+        <!--            android:layout_marginStart="70dp"-->
+        <!--            android:layout_marginLeft="70dp"-->
+        <!--            android:layout_marginTop="180dp"-->
+        <!--            android:contentDescription="@string/bills"-->
+        <!--            tools:src="@tools:sample/avatars" />-->
+</RelativeLayout>

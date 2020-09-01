@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/homenav"
+    app:startDestination="@id/idHome">
+
+    <fragment
+        android:id="@+id/idHome"
+        android:name="com.trail1.billorganiser.HomeFragment"
+        android:label="Home"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/idMyProfile"
+        android:name="com.trail1.billorganiser.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile" />
+    <fragment
+        android:id="@+id/idCollections"
+        android:name="com.trail1.billorganiser.CollectionsFragment"
+        android:label="Collections"
+        tools:layout="@layout/collections" />
+</navigation>

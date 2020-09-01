@@ -1,0 +1,48 @@
+<resources>
+    <string name="app_name">Bill Organiser</string>
+    <string name="hintUserName">username</string>
+    <string name="hintPassword">password</string>
+    <string name="loginTxt">Login</string>
+    <string name="registerTxt">New User? Register Here</string>
+    <string name="regFormFNHint">First Name</string>
+    <string name="regFormLNHint">Last Name</string>
+    <string name="regFormEmailHint">E-Mail</string>
+    <string name="regFormPWHint">Password</string>
+    <string name="register">Start Organising Bills</string>
+    <string name="regFormRePWHint">Re-enter Password</string>
+    <string name="LoginImgDesc">Logo_In_Login_Page</string>
+    <string name="RegistrationForm">Get Started</string>
+    <string name="regFormUNHint">username</string>
+    <string name="txt_remember_me">Remember Me</string>
+    <string name="title_activity_home_page">HomePage</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="txtRefresh">Refresh</string>
+    <string name="txtFilter">Filter</string>
+    <string name="txtSearch">Search</string>
+    <string name="menuDesc">Menu Description</string>
+    <string name="profile">My Account</string>
+    <string name="collectibles">Collections</string>
+    <string name="home">Home</string>
+    <string name="profile_name">ME</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="LO">Logout</string>
+    <string name="cam">Camera</string>
+    <string name="album">Album</string>
+    <string name="bills">Bills Image</string>
+    <string name="profilePic">Profile Picture</string>
+    <string name="pro_layout">Profile Layout</string>
+    <string name="confirm_old_pw">Confirm Old Password</string>
+    <string name="enter_new_password">Enter New Password</string>
+    <string name="update">Update</string>
+    <string name="confirm_new_password">Confirm New Password</string>
+    <string name="maintenance">PAGE UNDER MAINTENANCE</string>
+    <string name="alert">Alert Img</string>
+</resources>

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/idProfNavFrag"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ProfileFragment">
+
+    <com.makeramen.roundedimageview.RoundedImageView
+        android:id="@+id/idProfilePicInProfile"
+        android:layout_width="@dimen/stdProPicWidth"
+        android:layout_height="@dimen/stdProPicHeight"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="160dp"
+        android:contentDescription="@string/profilePic"
+        android:scaleType="centerCrop"
+        android:src="@drawable/user_pro_pic"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:riv_oval="true" />
+
+    <TextView
+        android:id="@+id/idProfileUserTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="300dp"
+        android:textColor="#0A0A0A"
+        android:textSize="@dimen/FormTitle"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/idProfileEmailTV"
+        android:layout_width="@dimen/stdProfileInputTVWidth"
+        android:layout_height="@dimen/stdProfileInputTVHeight"
+        android:layout_marginStart="@dimen/stdProfileInputTV_LMLeft"
+        android:layout_marginLeft="@dimen/stdProfileInputTV_LMLeft"
+        android:layout_marginTop="@dimen/stdProfileEmailTV_LMTop"
+        android:paddingStart="@dimen/stdProfileInputTxtPadLeft"
+        android:paddingLeft="@dimen/stdProfileInputTxtPadLeft"
+        android:paddingTop="@dimen/stdProfileInputTxtPadTop"
+        android:paddingBottom="@dimen/stdProfileInputTxtPadTop"
+        android:textColor="#040404"
+        android:textSize="@dimen/stdProfileInputTxtSize"
+        tools:ignore="RtlSymmetry,SpUsage" />
+
+    <EditText
+        android:id="@+id/idOldPasswordET"
+        android:layout_width="@dimen/stdProfileInputTVWidth"
+        android:layout_height="@dimen/stdProfileInputTVHeight"
+        android:layout_marginStart="@dimen/stdProfileInputTV_LMLeft"
+        android:layout_marginLeft="@dimen/stdProfileInputTV_LMLeft"
+        android:layout_marginTop="@dimen/stdProfileOldPWET_LMTop"
+        android:autofillHints=""
+        android:ems="10"
+        android:hint="@string/confirm_old_pw"
+        android:inputType="textPassword"
+        android:paddingStart="@dimen/stdProfileInputTxtPadLeft"
+        android:paddingLeft="@dimen/stdProfileInputTxtPadLeft"
+        android:paddingTop="@dimen/stdProfileInputTxtPadTop"
+        android:paddingBottom="@dimen/stdProfileInputTxtPadTop"
+        android:textColor="#040404"
+        android:textSize="@dimen/stdProfileInputTxtSize"
+        tools:ignore="LabelFor,RtlSymmetry,SpUsage" />
+
+    <EditText
+        android:id="@+id/idNewPasswordET"
+        android:layout_width="@dimen/stdProfileInputTVWidth"
+        android:layout_height="@dimen/stdProfileInputTVHeight"
+        android:layout_marginStart="@dimen/stdProfileInputTV_LMLeft"
+        android:layout_marginLeft="@dimen/stdProfileInputTV_LMLeft"
+        android:layout_marginTop="@dimen/stdProfileNewPWET_LMTop"
+        android:autofillHints=""
+        android:ems="10"
+        android:hint="@string/enter_new_password"
+        android:inputType="textPassword"
+        android:paddingStart="@dimen/stdProfileInputTxtPadLeft"
+        android:paddingLeft="@dimen/stdProfileInputTxtPadLeft"
+        android:paddingTop="@dimen/stdProfileInputTxtPadTop"
+        android:paddingBottom="@dimen/stdProfileInputTxtPadTop"
+        android:textColor="#040404"
+        android:textSize="@dimen/stdProfileInputTxtSize"
+        tools:ignore="LabelFor,RtlSymmetry,SpUsage" />
+
+    <EditText
+        android:id="@+id/idConfirmNewPasswordET"
+        android:layout_width="@dimen/stdProfileInputTVWidth"
+        android:layout_height="@dimen/stdProfileInputTVHeight"
+        android:layout_marginStart="@dimen/stdProfileInputTV_LMLeft"
+        android:layout_marginLeft="@dimen/stdProfileInputTV_LMLeft"
+        android:layout_marginTop="@dimen/stdProfileConfirmNewPWET_LMTop"
+        android:autofillHints=""
+        android:ems="10"
+        android:hint="@string/confirm_new_password"
+        android:inputType="textPassword"
+        android:paddingStart="@dimen/stdProfileInputTxtPadLeft"
+        android:paddingLeft="@dimen/stdProfileInputTxtPadLeft"
+        android:paddingTop="@dimen/stdProfileInputTxtPadTop"
+        android:paddingBottom="@dimen/stdProfileInputTxtPadTop"
+        android:textColor="#040404"
+        android:textSize="@dimen/stdProfileInputTxtSize"
+        tools:ignore="LabelFor,RtlSymmetry,SpUsage" />
+
+    <Button
+        android:id="@+id/idBtnUpdate"
+        android:layout_width="@dimen/stdProfileUpdateBtn_LWidth"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="@dimen/stdProfileUpdateBtn_LMBottom"
+        android:background="@android:drawable/dialog_holo_dark_frame"
+        android:text="@string/update"
+        android:textColor="#09FB09"
+        android:textSize="@dimen/FormTitle"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/idProfileErrorTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/stdProfileInputTV_LMLeft"
+        android:layout_marginLeft="@dimen/stdProfileInputTV_LMLeft"
+        android:layout_marginTop="@dimen/stdProfileErrorTV_LMTop"
+        android:textColor="#F40505"
+        android:textSize="@dimen/stdErrorTxtSize" />
+
+</FrameLayout>

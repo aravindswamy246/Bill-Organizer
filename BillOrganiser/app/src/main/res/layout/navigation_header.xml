@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="20dp">
+    
+    <com.makeramen.roundedimageview.RoundedImageView
+        android:id="@+id/idProfilePicture"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/user_pro_pic"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:riv_oval="true"/>
+
+    <View
+        android:id="@+id/idViewSupporter"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:layout_marginStart="89dp"
+        android:layout_marginLeft="89dp"
+        app:layout_constraintBottom_toBottomOf="@id/idProfilePicture"
+        app:layout_constraintEnd_toEndOf="@+id/idProfilePicture"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/idProfilePicture" />
+
+    <TextView
+        android:id="@+id/idProfileTV"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:text="@string/profile_name"
+        android:textColor="#000000"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@id/idViewSupporter"
+        app:layout_constraintStart_toEndOf="@id/idProfilePicture"
+        android:layout_marginLeft="10dp"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

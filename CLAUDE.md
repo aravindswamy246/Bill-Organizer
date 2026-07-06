@@ -1,0 +1,69 @@
+# Bill Organizer — CLAUDE.md
+
+## What this is
+A React Native (iOS + Android) mobile app, built with Expo, for the Indian market. Users capture bills/receipts via camera, OS share-sheet ("forward from WhatsApp"), or a dedicated WhatsApp Business Cloud API number. Every bill is parsed by a vision-capable LLM (Claude) into structured data, categorized, and — for Warranty/Insurance bills — tracked toward an expiry date with scheduled reminders. Includes a spend analytics dashboard and RevenueCat-powered freemium gating.
+
+Full product spec: see `prompt.md` in the repo root. Do not duplicate that spec here — read it for feature detail; this file is about how to work in this codebase.
+
+@AGENTS.md
+
+## Key product decisions (deviate from prompt.md only here)
+- **Auth is email/password** via Supabase Auth, NOT phone OTP. Phone number is still collected during profile setup — it remains the identity key used to match inbound WhatsApp Business messages to a user account.
+- Vision LLM: **Claude API** (claude-sonnet-4-6 or newer), called only from a Supabase Edge Function. The API key must never reach the client.
+- Local Supabase is the primary dev backend. No cloud accounts (Supabase, Anthropic, Firebase, Apple/RevenueCat, Meta) exist yet — see "External setup required" below. Code should degrade gracefully (mock modes) where a missing credential would otherwise block local development.
+
+## Stack
+- **App**: Expo (TypeScript, expo-router), built via `expo prebuild` / dev client (not Expo Go) — Share Extensions, Firebase messaging, and RevenueCat all require native config plugins.
+- **Share sheet capture**: `expo-share-intent`
+- **Backend**: Supabase (Postgres, Auth, Storage, Edge Functions), run locally via the Supabase CLI. SQL migrations are the source of truth for schema.
+- **Bill parsing**: Supabase Edge Function `parse-bill`, calls Claude's vision API with a structured-extraction prompt, validates the response with zod.
+- **Push/local notifications**: `expo-notifications` for scheduled local reminders (works without any external account); `@react-native-firebase/messaging` for server-sent push once a Firebase project exists.
+- **Billing**: `react-native-purchases` (RevenueCat), wrapped in a `useEntitlements()` hook that falls back to a mock/dev entitlement provider when no RevenueCat key is configured, so free/premium gating stays testable pre-launch.
+- **Charts**: `react-native-gifted-charts`.
+- **State/data**: `@supabase/supabase-js` + TanStack Query.
+
+## Repo layout
+```
+prompt.md                  — full product spec (read first)
+app/                       — expo-router screens ((auth), (app) groups)
+src/features/{capture,bills,analytics,reminders,paywall,auth}/
+src/lib/{supabase,entitlements,offlineQueue,notifications}.ts
+supabase/migrations/*.sql  — schema, source of truth
+supabase/functions/{parse-bill,whatsapp-webhook,send-reminders}/
+```
+
+## Commands
+- `npm install` — install JS deps
+- `npx expo prebuild` — regenerate native iOS/Android projects after config plugin changes
+- `npx expo run:ios` / `npx expo run:android` — build & run on simulator/emulator
+- `supabase start` — start local Postgres/Auth/Storage/Studio
+- `supabase db reset` — apply all migrations fresh (destructive to local data only)
+- `supabase functions serve` — run edge functions locally
+- `supabase functions serve parse-bill --env-file supabase/.env.local` — serve a single function with secrets
+- `npx tsc --noEmit` — typecheck
+- `npm run lint` — ESLint
+
+## Conventions (do not violate)
+- **Never call the LLM API from the client.** All Claude calls go through the `parse-bill` edge function.
+- **Storage buckets are private.** Bills contain financial PII — access only via short-lived signed URLs, never public URLs.
+- **RLS is mandatory on every table.** Every table a user can reach must have row-level security scoped to `auth.uid()`.
+- **Never silently trust 100% automated extraction for money.** Every parsed bill goes through a confirm/edit screen before it's saved as confirmed.
+- **Offline-safe capture.** A captured bill must never be lost due to lack of connectivity — queue locally, sync when back online.
+- **Fallback on parse failure.** If the vision LLM call fails or returns low-confidence data, still save the raw image and let the user fill in fields manually — never block the save.
+- Category set is fixed for v1: Warranty, Insurance, Utilities, Subscriptions, Dining & Grocery, Medical, Travel, Other. Don't add categories without being asked.
+- Out of scope for v1 (per prompt.md §7): Gmail scanning, POS integrations, insurance claim automation, price-drop alerts, multi-user/family accounts. Do not build these.
+
+## External setup required (not blockers for local dev)
+These are needed to go from "working locally" to "live in production." Each integration point in code should work in a degraded/mock mode until these exist:
+1. **Anthropic API key** — for real bill parsing (mock-extraction mode is used until this is set).
+2. **Supabase cloud project** — to deploy migrations/functions/storage beyond local dev.
+3. **Firebase project** — for FCM server push (local notifications work without this).
+4. **Apple Developer account + Google Play Console** — needed for TestFlight/Play sandbox, push entitlements, and real Share Extension distribution.
+5. **RevenueCat account + store products** — for real subscription purchases (mock entitlement provider is used until this is set).
+6. **Meta Business verification + WhatsApp Business Cloud API number** — required for the WhatsApp-forward intake path; camera capture and the OS Share Extension work independently of this.
+
+## Skills available in this repo's context
+- `supabase` / `supabase-postgres-best-practices` — Supabase and Postgres patterns
+- `expo-react-native-typescript` — Expo/RN conventions
+- `claude-api` — best practices for calling the Claude API from the edge function (prompt caching, structured outputs)
+- `vibesec` — run before considering any security-sensitive feature (auth, storage, webhooks) done

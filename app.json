@@ -49,9 +49,13 @@
             "NSExtensionActivationSupportsImageWithMaxCount": 1,
             "NSExtensionActivationSupportsFileWithMaxCount": 1
           },
-          "androidIntentFilters": ["image/*", "application/pdf"]
+          "androidIntentFilters": [
+            "image/*",
+            "application/pdf"
+          ]
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,

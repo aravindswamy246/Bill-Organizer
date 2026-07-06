@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BarChart, LineChart } from 'react-native-gifted-charts';
 
@@ -61,11 +61,7 @@ export default function AnalyticsScreen() {
   };
 
   const showUpgradePrompt = () => {
-    // TODO(Phase 11): replace with navigation to the real RevenueCat paywall screen.
-    Alert.alert(
-      'Upgrade to Premium',
-      'Historical analytics and spend trends are a premium feature. Premium purchases are coming soon.',
-    );
+    router.push('/(app)/paywall?reason=analytics');
   };
 
   const barData =

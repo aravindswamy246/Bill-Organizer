@@ -61,7 +61,11 @@ These are needed to go from "working locally" to "live in production." Each inte
 2. **Supabase cloud project** — to deploy migrations/functions/storage beyond local dev.
 3. **Firebase project** — for FCM server push (local notifications work without this).
 4. **Apple Developer account + Google Play Console** — needed for TestFlight/Play sandbox, push entitlements, and real Share Extension distribution.
-5. **RevenueCat account + store products** — for real subscription purchases (mock entitlement provider is used until this is set).
+5. **RevenueCat account + store products** — for real subscription purchases. Until then, `useEntitlements()` falls back to a local dev-only mock toggle exposed on the paywall screen. Once set up:
+   - `EXPO_PUBLIC_REVENUECAT_API_KEY_IOS` / `EXPO_PUBLIC_REVENUECAT_API_KEY_ANDROID` — client-side SDK keys (public, safe to ship in the app binary — RevenueCat's own design).
+   - Configure RevenueCat's app_user_id to equal the Supabase auth user id (already done client-side in `configurePurchases`, called from `src/app/(app)/_layout.tsx`) so the webhook can map events to `profiles.id`.
+   - `REVENUECAT_WEBHOOK_SECRET` — set as a secret for the `revenuecat-webhook` function, and configure the same value as the webhook's "Authorization header" in the RevenueCat dashboard. Without it, the webhook accepts unauthenticated requests (logged) — fine for local testing, never acceptable in production.
+   - A "premium" entitlement must exist in the RevenueCat dashboard (see `PREMIUM_ENTITLEMENT_ID` in `src/lib/purchases.ts`).
 6. **Meta Business verification + WhatsApp Business Cloud API number** — required for the WhatsApp-forward intake path; camera capture and the OS Share Extension work independently of this. Once obtained, set these as secrets for the `whatsapp-webhook` function (`supabase secrets set` in the cloud project, or an `--env-file` locally):
    - `WHATSAPP_VERIFY_TOKEN` — any string you choose; entered in the Meta App Dashboard webhook config and echoed back on the GET verification handshake.
    - `WHATSAPP_APP_SECRET` — from the Meta App Dashboard; used to verify the `X-Hub-Signature-256` HMAC on inbound POSTs. Without it, signature verification is skipped (logged), matching this codebase's mock/degrade pattern — fine for local dev, never acceptable in production.

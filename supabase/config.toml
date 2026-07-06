@@ -393,6 +393,12 @@ deno_version = 2
 [functions.whatsapp-webhook]
 verify_jwt = false
 
+# RevenueCat calls this endpoint directly with a fixed Authorization header
+# value (compared against REVENUECAT_WEBHOOK_SECRET in the function itself),
+# not a Supabase JWT.
+[functions.revenuecat-webhook]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

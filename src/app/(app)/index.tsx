@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, TextInput } from 'react-native';
+import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BillListItem } from '@/components/bill-list-item';
@@ -12,6 +12,8 @@ import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { BILL_CATEGORIES, type BillCategory } from '@/features/bills/types';
 import { useBillList, type DateRangeFilter } from '@/features/bills/useBillList';
+import { exportBillsAsCsv, exportBillsAsPdf } from '@/features/export/exportBills';
+import { useEntitlements } from '@/features/paywall/useEntitlements';
 import { useTheme } from '@/hooks/use-theme';
 
 const RANGE_OPTIONS: { label: string; value: DateRangeFilter }[] = [
@@ -25,6 +27,7 @@ const CATEGORY_OPTIONS: readonly string[] = ['All', ...BILL_CATEGORIES];
 
 export default function HomeScreen() {
   const { profile, signOut } = useAuth();
+  const { isPremium } = useEntitlements();
   const router = useRouter();
   const theme = useTheme();
 
@@ -42,6 +45,18 @@ export default function HomeScreen() {
   const { data: bills, isLoading, isFetching, refetch } = useBillList({ search, category, range });
   const hasActiveFilters = search !== '' || category !== null || range !== 'all';
 
+  const handleExport = () => {
+    if (!isPremium) {
+      router.push('/(app)/paywall?reason=export');
+      return;
+    }
+    Alert.alert('Export bills', `Export ${(bills ?? []).length} bill(s) matching the current filters.`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'CSV', onPress: () => exportBillsAsCsv(bills ?? []) },
+      { text: 'PDF', onPress: () => exportBillsAsPdf(bills ?? []) },
+    ]);
+  };
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
@@ -58,6 +73,11 @@ export default function HomeScreen() {
             <Pressable onPress={() => router.push('/(app)/reminders')} hitSlop={Spacing.two}>
               <ThemedText type="link" themeColor="textSecondary">
                 Reminders
+              </ThemedText>
+            </Pressable>
+            <Pressable onPress={handleExport} hitSlop={Spacing.two}>
+              <ThemedText type="link" themeColor="textSecondary">
+                Export
               </ThemedText>
             </Pressable>
             <Pressable onPress={signOut} hitSlop={Spacing.two}>

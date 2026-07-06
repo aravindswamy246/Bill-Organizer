@@ -257,11 +257,13 @@ export default function BillDetailScreen() {
       await queryClient.invalidateQueries({ queryKey: ['reminders'] });
 
       if (reminderPaywallTriggered) {
-        // TODO(Phase 11): replace with navigation to the real RevenueCat paywall screen.
         Alert.alert(
           'Bill saved',
           `The bill saved, but you already have ${FREE_ACTIVE_REMINDER_LIMIT} active reminders on the free plan. Upgrade to Premium for unlimited reminders — this bill won't get expiry alerts until then.`,
-          [{ text: 'OK', onPress: () => router.replace('/(app)') }],
+          [
+            { text: 'Not now', style: 'cancel', onPress: () => router.replace('/(app)') },
+            { text: 'Upgrade', onPress: () => router.replace('/(app)/paywall?reason=reminders') },
+          ],
         );
       } else {
         router.replace('/(app)');

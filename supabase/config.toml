@@ -385,6 +385,14 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# Meta calls this endpoint directly (GET verification handshake, then POST
+# message payloads) with no Supabase JWT — auth is instead the
+# X-Hub-Signature-256 HMAC check the function performs itself against
+# WHATSAPP_APP_SECRET. Must stay unverified or every real webhook call from
+# Meta would be rejected by the gateway before reaching our code.
+[functions.whatsapp-webhook]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

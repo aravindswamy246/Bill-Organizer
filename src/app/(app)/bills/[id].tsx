@@ -1,7 +1,8 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CategoryChip } from '@/components/category-chip';
@@ -24,14 +25,17 @@ export default function BillDetailScreen() {
   const billId = Array.isArray(params.id) ? params.id[0] : params.id;
   const router = useRouter();
   const theme = useTheme();
+  const queryClient = useQueryClient();
 
   const [loading, setLoading] = useState(true);
   const [parsing, setParsing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [lowConfidence, setLowConfidence] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [storagePath, setStoragePath] = useState<string | null>(null);
 
   const [merchantName, setMerchantName] = useState('');
   const [billDate, setBillDate] = useState('');
@@ -54,6 +58,7 @@ export default function BillDetailScreen() {
         .single<Bill>();
       if (error || !bill) throw error ?? new Error('Bill not found');
 
+      setStoragePath(bill.storage_path);
       if (bill.storage_path) {
         const { data: signed } = await supabase.storage
           .from('bills')
@@ -210,12 +215,41 @@ export default function BillDetailScreen() {
         if (reminderDeleteError) throw reminderDeleteError;
       }
 
+      await queryClient.invalidateQueries({ queryKey: ['bills'] });
       router.replace('/(app)');
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Could not save this bill.');
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleDelete = () => {
+    if (!billId) return;
+    Alert.alert('Delete bill?', 'This permanently removes the bill, its image, and any reminder.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          setDeleting(true);
+          setSaveError(null);
+          try {
+            if (storagePath) {
+              await supabase.storage.from('bills').remove([storagePath]);
+            }
+            const { error } = await supabase.from('bills').delete().eq('id', billId);
+            if (error) throw error;
+            await queryClient.invalidateQueries({ queryKey: ['bills'] });
+            router.replace('/(app)');
+          } catch (err) {
+            setSaveError(err instanceof Error ? err.message : 'Could not delete this bill.');
+          } finally {
+            setDeleting(false);
+          }
+        },
+      },
+    ]);
   };
 
   if (loading) {
@@ -357,10 +391,21 @@ export default function BillDetailScreen() {
           <PrimaryButton
             title="Save"
             loading={saving}
-            disabled={parsing}
+            disabled={parsing || deleting}
             onPress={handleSave}
             style={styles.saveButton}
           />
+
+          <Pressable
+            onPress={handleDelete}
+            disabled={saving || deleting}
+            hitSlop={Spacing.two}
+            style={styles.deleteButton}
+          >
+            <ThemedText type="link" style={styles.deleteLabel}>
+              {deleting ? 'Deleting…' : 'Delete bill'}
+            </ThemedText>
+          </Pressable>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -425,5 +470,12 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginTop: Spacing.three,
+  },
+  deleteButton: {
+    alignItems: 'center',
+    marginTop: Spacing.two,
+  },
+  deleteLabel: {
+    color: '#D64545',
   },
 });

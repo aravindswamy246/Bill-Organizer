@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -9,6 +10,7 @@ import { useAuth } from '@/features/auth/AuthProvider';
 
 export default function HomeScreen() {
   const { profile, signOut } = useAuth();
+  const router = useRouter();
 
   return (
     <ThemedView style={styles.container}>
@@ -17,6 +19,11 @@ export default function HomeScreen() {
         <ThemedText type="default">
           Your bills, analytics, and reminders will show up here.
         </ThemedText>
+        <PrimaryButton
+          title="Add a bill"
+          onPress={() => router.push('/(app)/capture')}
+          style={styles.button}
+        />
         <PrimaryButton title="Log out" onPress={signOut} style={styles.button} />
       </SafeAreaView>
     </ThemedView>

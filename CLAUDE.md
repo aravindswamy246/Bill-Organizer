@@ -65,5 +65,4 @@ These are needed to go from "working locally" to "live in production." Each inte
 ## Skills available in this repo's context
 - `supabase` / `supabase-postgres-best-practices` — Supabase and Postgres patterns
 - `expo-react-native-typescript` — Expo/RN conventions
-- `claude-api` — best practices for calling the Claude API from the edge function (prompt caching, structured outputs)
 - `vibesec` — run before considering any security-sensitive feature (auth, storage, webhooks) done

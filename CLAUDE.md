@@ -36,6 +36,7 @@ supabase/functions/{parse-bill,whatsapp-webhook,send-reminders}/
 - `npm install` — install JS deps
 - `npx expo prebuild` — regenerate native iOS/Android projects after config plugin changes
 - `npx expo run:ios` / `npx expo run:android` — build & run on simulator/emulator
+  - Android native build (CMake/Ninja for `react-native-worklets`/`react-native-screens`) fails on JDK 24+ (`WARNING: A restricted method in java.lang.System has been called`). Use a JDK 17–21 — Android Studio's bundled JBR works and needs no separate install: `export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"` before `npx expo run:android`.
 - `supabase start` — start local Postgres/Auth/Storage/Studio
 - `supabase db reset` — apply all migrations fresh (destructive to local data only)
 - `supabase functions serve` — run edge functions locally

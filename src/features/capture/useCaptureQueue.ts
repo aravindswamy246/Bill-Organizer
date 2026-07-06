@@ -6,7 +6,7 @@ import {
   subscribeToQueue,
   watchNetworkAndProcess,
 } from './offlineQueue';
-import type { QueuedCapture } from './types';
+import type { CaptureSource, QueuedCapture } from './types';
 
 /**
  * Subscribes to the offline capture queue and keeps it draining: once on
@@ -39,8 +39,9 @@ export function useCaptureQueue() {
 export async function captureAndUpload(
   sourceUri: string,
   mimeType: string | undefined,
+  source: CaptureSource = 'camera',
 ): Promise<string | null> {
-  const item = await enqueueCapture(sourceUri, mimeType);
+  const item = await enqueueCapture(sourceUri, mimeType, source);
   const { uploaded } = await processQueue();
   return uploaded.find((entry) => entry.itemId === item.id)?.billId ?? null;
 }

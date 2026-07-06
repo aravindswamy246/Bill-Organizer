@@ -1,5 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, Slot, ThemeProvider, useRouter, useSegments } from 'expo-router';
+import { ShareIntentProvider } from 'expo-share-intent';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 
@@ -36,14 +37,16 @@ function RootNavigation() {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <ThemedView style={{ flex: 1 }}>
-            <RootNavigation />
-          </ThemedView>
-        </AuthProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <ShareIntentProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <ThemedView style={{ flex: 1 }}>
+              <RootNavigation />
+            </ThemedView>
+          </AuthProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </ShareIntentProvider>
   );
 }

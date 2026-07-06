@@ -5,7 +5,7 @@ import { Directory, File, Paths } from 'expo-file-system';
 
 import { supabase } from '@/lib/supabase';
 
-import type { QueuedCapture } from './types';
+import type { CaptureSource, QueuedCapture } from './types';
 
 const QUEUE_STORAGE_KEY = 'capture-queue/v1';
 const captureDirectory = new Directory(Paths.document, 'captures');
@@ -63,6 +63,7 @@ function extensionFromMimeType(mimeType: string): string {
 export async function enqueueCapture(
   sourceUri: string,
   mimeType: string | undefined,
+  source: CaptureSource = 'camera',
 ): Promise<QueuedCapture> {
   await hydrate();
   if (!captureDirectory.exists) {
@@ -80,6 +81,7 @@ export async function enqueueCapture(
     localUri: destination.uri,
     mimeType: resolvedMimeType,
     extension,
+    source,
     createdAt: new Date().toISOString(),
     attempts: 0,
   };
@@ -102,7 +104,7 @@ async function uploadOne(item: QueuedCapture, userId: string): Promise<string> {
     .from('bills')
     .insert({
       user_id: userId,
-      source: 'camera',
+      source: item.source,
       storage_path: storagePath,
       status: 'pending_review',
     })

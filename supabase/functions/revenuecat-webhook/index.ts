@@ -36,9 +36,20 @@ function json(body: Record<string, unknown>, status = 200): Response {
   });
 }
 
+// Constant-time comparison so a mistimed response can't leak the configured
+// secret one character at a time (mirrors whatsapp-webhook's timingSafeEqualHex).
+function timingSafeEqualString(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) {
+    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return mismatch === 0;
+}
+
 // Event types that grant/renew premium access. PRODUCT_CHANGE covers a
 // user switching between monthly/annual premium plans (still premium).
-const ENTITLING_EVENTS = new Set([
+export const ENTITLING_EVENTS = new Set([
   'INITIAL_PURCHASE',
   'RENEWAL',
   'UNCANCELLATION',
@@ -48,15 +59,15 @@ const ENTITLING_EVENTS = new Set([
 
 // CANCELLATION only means auto-renew was turned off — the user keeps
 // premium until `expiration_at_ms`. Only EXPIRATION actually ends access.
-const DOWNGRADING_EVENTS = new Set(['EXPIRATION']);
+export const DOWNGRADING_EVENTS = new Set(['EXPIRATION']);
 
-const STORE_MAP: Record<string, 'app_store' | 'play_store'> = {
+export const STORE_MAP: Record<string, 'app_store' | 'play_store'> = {
   APP_STORE: 'app_store',
   MAC_APP_STORE: 'app_store',
   PLAY_STORE: 'play_store',
 };
 
-type RevenueCatEvent = {
+export type RevenueCatEvent = {
   type: string;
   app_user_id: string;
   store?: string;
@@ -64,70 +75,102 @@ type RevenueCatEvent = {
   expiration_at_ms?: number | null;
 };
 
-Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
-  if (req.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, 405);
-  }
+// Minimal shape of the supabase-js calls this function makes — narrow
+// enough that `index.test.ts` can pass a hand-written fake instead of a
+// real `SupabaseClient`, so the update/insert logic (including the tier
+// classification) is unit-testable without a live database.
+export type ProfilesAndSubscriptionsClient = {
+  from(table: 'profiles'): {
+    update(values: { subscription_tier: string }): {
+      eq(column: string, value: string): Promise<{ error: { message: string } | null }>;
+    };
+  };
+} & {
+  from(table: 'subscriptions'): {
+    insert(values: Record<string, unknown>): Promise<{ error: { message: string } | null }>;
+  };
+};
 
-  const webhookSecret = Deno.env.get('REVENUECAT_WEBHOOK_SECRET');
-  if (webhookSecret) {
-    const provided = req.headers.get('authorization');
-    if (provided !== webhookSecret) return json({ error: 'Unauthorized' }, 401);
-  } else {
-    console.warn('[revenuecat-webhook] REVENUECAT_WEBHOOK_SECRET not set — skipping auth check');
-  }
-
-  let body: { event?: RevenueCatEvent };
-  try {
-    body = await req.json();
-  } catch {
-    return json({ error: 'Invalid JSON' }, 400);
-  }
-
-  const event = body.event;
-  if (!event?.app_user_id || !event.type) {
-    return json({ error: 'Missing event.app_user_id or event.type' }, 400);
-  }
-
-  if (!ENTITLING_EVENTS.has(event.type) && !DOWNGRADING_EVENTS.has(event.type)) {
-    // Other event types (BILLING_ISSUE, TRANSFER, etc.) don't change tier —
-    // acknowledge without writing anything.
-    console.log(`[revenuecat-webhook] ignoring event type: ${event.type}`);
-    return json({ received: true });
-  }
-
-  const supabase = createClient(
+function defaultGetClient(): ProfilesAndSubscriptionsClient {
+  return createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-  );
+  ) as unknown as ProfilesAndSubscriptionsClient;
+}
 
-  const tier = ENTITLING_EVENTS.has(event.type) ? 'premium' : 'free';
-  const store = event.store ? (STORE_MAP[event.store] ?? null) : null;
+// Exported so `index.test.ts` can inject a fake client and exercise the
+// full request/response cycle without a live Supabase instance. `Deno.serve`
+// is only invoked when this module is run directly (the Supabase edge
+// runtime's entrypoint), not on import.
+export function createHandler(getClient: () => ProfilesAndSubscriptionsClient = defaultGetClient) {
+  return async (req: Request): Promise<Response> => {
+    if (req.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
+    }
+    if (req.method !== 'POST') {
+      return json({ error: 'Method not allowed' }, 405);
+    }
 
-  const { error: updateError } = await supabase
-    .from('profiles')
-    .update({ subscription_tier: tier })
-    .eq('id', event.app_user_id);
-  if (updateError) {
-    console.error('[revenuecat-webhook] failed to update profile tier', updateError);
-    return json({ error: updateError.message }, 500);
-  }
+    const webhookSecret = Deno.env.get('REVENUECAT_WEBHOOK_SECRET');
+    if (webhookSecret) {
+      const provided = req.headers.get('authorization');
+      if (!provided || !timingSafeEqualString(provided, webhookSecret)) {
+        return json({ error: 'Unauthorized' }, 401);
+      }
+    } else {
+      console.warn('[revenuecat-webhook] REVENUECAT_WEBHOOK_SECRET not set — skipping auth check');
+    }
 
-  const { error: insertError } = await supabase.from('subscriptions').insert({
-    user_id: event.app_user_id,
-    tier,
-    store,
-    renewed_at: event.purchased_at_ms ? new Date(event.purchased_at_ms).toISOString() : null,
-    expires_at: event.expiration_at_ms ? new Date(event.expiration_at_ms).toISOString() : null,
-  });
-  if (insertError) {
-    // The profile tier is already updated (the part that matters for
-    // gating) — a failed audit-log insert shouldn't fail the whole webhook.
-    console.error('[revenuecat-webhook] failed to insert subscriptions row', insertError);
-  }
+    let body: { event?: RevenueCatEvent };
+    try {
+      body = await req.json();
+    } catch {
+      return json({ error: 'Invalid JSON' }, 400);
+    }
 
-  return json({ received: true, app_user_id: event.app_user_id, tier });
-});
+    const event = body.event;
+    if (!event?.app_user_id || !event.type) {
+      return json({ error: 'Missing event.app_user_id or event.type' }, 400);
+    }
+
+    if (!ENTITLING_EVENTS.has(event.type) && !DOWNGRADING_EVENTS.has(event.type)) {
+      // Other event types (BILLING_ISSUE, TRANSFER, etc.) don't change tier —
+      // acknowledge without writing anything.
+      console.log(`[revenuecat-webhook] ignoring event type: ${event.type}`);
+      return json({ received: true });
+    }
+
+    const supabase = getClient();
+
+    const tier = ENTITLING_EVENTS.has(event.type) ? 'premium' : 'free';
+    const store = event.store ? (STORE_MAP[event.store] ?? null) : null;
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ subscription_tier: tier })
+      .eq('id', event.app_user_id);
+    if (updateError) {
+      console.error('[revenuecat-webhook] failed to update profile tier', updateError);
+      return json({ error: updateError.message }, 500);
+    }
+
+    const { error: insertError } = await supabase.from('subscriptions').insert({
+      user_id: event.app_user_id,
+      tier,
+      store,
+      renewed_at: event.purchased_at_ms ? new Date(event.purchased_at_ms).toISOString() : null,
+      expires_at: event.expiration_at_ms ? new Date(event.expiration_at_ms).toISOString() : null,
+    });
+    if (insertError) {
+      // The profile tier is already updated (the part that matters for
+      // gating) — a failed audit-log insert shouldn't fail the whole webhook.
+      console.error('[revenuecat-webhook] failed to insert subscriptions row', insertError);
+    }
+
+    return json({ received: true, app_user_id: event.app_user_id, tier });
+  };
+}
+
+export const handler = createHandler();
+
+if (import.meta.main) Deno.serve(handler);

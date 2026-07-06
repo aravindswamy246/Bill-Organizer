@@ -1,0 +1,78 @@
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@std/assert@1": "1.0.19",
+    "jsr:@std/internal@^1.0.12": "1.0.14"
+  },
+  "jsr": {
+    "@std/assert@1.0.19": {
+      "integrity": "eaada96ee120cb980bc47e040f82814d786fe8162ecc53c91d8df60b8755991e",
+      "dependencies": [
+        "jsr:@std/internal"
+      ]
+    },
+    "@std/internal@1.0.14": {
+      "integrity": "291516b3d4c35024d6ffbc0a9df5bf4c64116e05b50012cf846710152d2ffdf7"
+    }
+  },
+  "workspace": {
+    "packageJson": {
+      "dependencies": [
+        "npm:@expo/ui@~57.0.3",
+        "npm:@react-native-async-storage/async-storage@2.2.0",
+        "npm:@react-native-community/netinfo@12.0.1",
+        "npm:@supabase/supabase-js@^2.110.0",
+        "npm:@tanstack/react-query@^5.101.2",
+        "npm:@types/aes-js@^3.1.4",
+        "npm:@types/jest@^29.5.14",
+        "npm:@types/react@~19.2.2",
+        "npm:aes-js@^3.1.2",
+        "npm:eslint-config-expo@57.0",
+        "npm:eslint-config-prettier@^10.1.8",
+        "npm:eslint@9",
+        "npm:expo-constants@~57.0.3",
+        "npm:expo-crypto@57.0",
+        "npm:expo-device@57.0",
+        "npm:expo-document-picker@57.0",
+        "npm:expo-file-system@57.0",
+        "npm:expo-font@57.0",
+        "npm:expo-glass-effect@57.0",
+        "npm:expo-image-picker@~57.0.2",
+        "npm:expo-image@57.0",
+        "npm:expo-linear-gradient@57.0",
+        "npm:expo-linking@~57.0.1",
+        "npm:expo-notifications@~57.0.3",
+        "npm:expo-print@57.0",
+        "npm:expo-router@~57.0.3",
+        "npm:expo-secure-store@57.0",
+        "npm:expo-share-intent@8",
+        "npm:expo-sharing@~57.0.2",
+        "npm:expo-splash-screen@~57.0.2",
+        "npm:expo-status-bar@57.0",
+        "npm:expo-symbols@57.0",
+        "npm:expo-system-ui@57.0",
+        "npm:expo-web-browser@57.0",
+        "npm:expo@~57.0.2",
+        "npm:jest-expo@^57.0.1",
+        "npm:jest@^29.7.0",
+        "npm:prettier@^3.9.4",
+        "npm:react-dom@19.2.3",
+        "npm:react-native-gesture-handler@2.32",
+        "npm:react-native-get-random-values@1.11",
+        "npm:react-native-gifted-charts@^1.4.77",
+        "npm:react-native-purchases@^10.4.1",
+        "npm:react-native-reanimated@4.5.0",
+        "npm:react-native-safe-area-context@5.7",
+        "npm:react-native-screens@4.25.2",
+        "npm:react-native-svg@15.15.4",
+        "npm:react-native-url-polyfill@3",
+        "npm:react-native-web@0.21",
+        "npm:react-native-worklets@0.10.0",
+        "npm:react-native@0.86.0",
+        "npm:react@19.2.3",
+        "npm:typescript@~6.0.3",
+        "npm:zod@^4.4.3"
+      ]
+    }
+  }
+}

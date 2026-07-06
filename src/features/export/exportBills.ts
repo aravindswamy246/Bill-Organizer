@@ -4,16 +4,16 @@ import * as Sharing from 'expo-sharing';
 
 import type { Bill } from '@/features/bills/types';
 
-function csvEscape(value: string): string {
+export function csvEscape(value: string): string {
   if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
   return value;
 }
 
-function formatAmount(bill: Bill): string {
+export function formatAmount(bill: Bill): string {
   return bill.total_amount != null ? bill.total_amount.toFixed(2) : '';
 }
 
-function billsToCsv(bills: Bill[]): string {
+export function billsToCsv(bills: Bill[]): string {
   const header = ['Date', 'Merchant', 'Category', 'Amount', 'Currency', 'Status', 'Source'];
   const rows = bills.map((bill) => [
     bill.bill_date ?? '',
@@ -27,14 +27,14 @@ function billsToCsv(bills: Bill[]): string {
   return [header, ...rows].map((row) => row.map(csvEscape).join(',')).join('\n');
 }
 
-function escapeHtml(value: string): string {
+export function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 }
 
-function billsToHtml(bills: Bill[]): string {
+export function billsToHtml(bills: Bill[]): string {
   const rows = bills
     .map(
       (bill) => `

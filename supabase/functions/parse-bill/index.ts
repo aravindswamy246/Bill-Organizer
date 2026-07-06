@@ -37,7 +37,7 @@ const corsHeaders = {
 
 type Category = (typeof CATEGORIES)[number];
 
-type ExtractedBill = {
+export type ExtractedBill = {
   merchant_name: string | null;
   bill_date: string | null;
   total_amount: number | null;
@@ -100,7 +100,7 @@ const EXTRACT_BILL_TOOL = {
   },
 };
 
-function mockExtraction(): ExtractedBill {
+export function mockExtraction(): ExtractedBill {
   return {
     merchant_name: null,
     bill_date: null,
@@ -115,7 +115,7 @@ function mockExtraction(): ExtractedBill {
   };
 }
 
-function base64Encode(bytes: Uint8Array): string {
+export function base64Encode(bytes: Uint8Array): string {
   let binary = '';
   const chunkSize = 0x8000;
   for (let i = 0; i < bytes.length; i += chunkSize) {
@@ -124,13 +124,13 @@ function base64Encode(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
-function guessMimeTypeFromPath(path: string): string {
+export function guessMimeTypeFromPath(path: string): string {
   if (path.endsWith('.pdf')) return 'application/pdf';
   if (path.endsWith('.png')) return 'image/png';
   return 'image/jpeg';
 }
 
-function contentBlockForFile(mimeType: string, base64: string) {
+export function contentBlockForFile(mimeType: string, base64: string) {
   if (mimeType === 'application/pdf') {
     return {
       type: 'document',
@@ -143,7 +143,7 @@ function contentBlockForFile(mimeType: string, base64: string) {
   return { type: 'image', source: { type: 'base64', media_type: imageMediaType, data: base64 } };
 }
 
-async function callClaude(
+export async function callClaude(
   apiKey: string,
   mimeType: string,
   base64: string,
@@ -181,9 +181,7 @@ async function callClaude(
   }
 
   const data = await response.json();
-  const toolUse = (data.content ?? []).find(
-    (block: { type: string }) => block.type === 'tool_use',
-  );
+  const toolUse = (data.content ?? []).find((block: { type: string }) => block.type === 'tool_use');
   if (!toolUse) throw new Error('Claude did not return a tool_use block');
   return toolUse.input as ExtractedBill;
 }
@@ -195,76 +193,117 @@ function json(body: Record<string, unknown>, status = 200): Response {
   });
 }
 
-Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+// Minimal shape of the supabase-js calls this function makes — narrow
+// enough that `index.test.ts` can pass a hand-written fake instead of a
+// real `SupabaseClient`, so the download/extract/save logic is
+// unit-testable without a live Supabase project.
+export type BillsClient = {
+  from(table: 'bills'): {
+    select(columns: string): {
+      eq(
+        column: string,
+        value: string,
+      ): {
+        single(): Promise<{
+          data: { id: string; storage_path: string | null } | null;
+          error: unknown;
+        }>;
+      };
+    };
+    update(values: Record<string, unknown>): {
+      eq(column: string, value: string): Promise<{ error: unknown }>;
+    };
+  };
+  storage: {
+    from(bucket: string): {
+      download(path: string): Promise<{ data: Blob | null; error: unknown }>;
+    };
+  };
+};
 
-  try {
-    const { billId } = await req.json();
-    if (!billId || typeof billId !== 'string') {
-      return json({ error: 'billId is required' }, 400);
+function defaultGetClient(authHeader: string): BillsClient {
+  return createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+    global: { headers: { Authorization: authHeader } },
+  }) as unknown as BillsClient;
+}
+
+// Exported so `index.test.ts` can inject a fake client and mock `fetch`
+// (Claude) to exercise the full request/response cycle without a live
+// Supabase project or a real Anthropic API key. `Deno.serve` is only
+// invoked when this module is run directly (the Supabase edge runtime's
+// entrypoint), not on import.
+export function createHandler(getClient: (authHeader: string) => BillsClient = defaultGetClient) {
+  return async (req: Request): Promise<Response> => {
+    if (req.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
     }
 
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) return json({ error: 'Missing Authorization header' }, 401);
+    try {
+      const { billId } = await req.json();
+      if (!billId || typeof billId !== 'string') {
+        return json({ error: 'billId is required' }, 400);
+      }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) return json({ error: 'Missing Authorization header' }, 401);
 
-    const { data: bill, error: billError } = await supabase
-      .from('bills')
-      .select('id, storage_path')
-      .eq('id', billId)
-      .single();
-    if (billError || !bill) return json({ error: 'Bill not found' }, 404);
-    if (!bill.storage_path) return json({ error: 'Bill has no uploaded file' }, 400);
+      const supabase = getClient(authHeader);
 
-    const { data: fileBlob, error: downloadError } = await supabase.storage
-      .from('bills')
-      .download(bill.storage_path);
-    if (downloadError || !fileBlob) return json({ error: 'Could not download bill file' }, 500);
+      const { data: bill, error: billError } = await supabase
+        .from('bills')
+        .select('id, storage_path')
+        .eq('id', billId)
+        .single();
+      if (billError || !bill) return json({ error: 'Bill not found' }, 404);
+      if (!bill.storage_path) return json({ error: 'Bill has no uploaded file' }, 400);
 
-    const mimeType = fileBlob.type || guessMimeTypeFromPath(bill.storage_path);
-    const bytes = new Uint8Array(await fileBlob.arrayBuffer());
-    const base64 = base64Encode(bytes);
+      const { data: fileBlob, error: downloadError } = await supabase.storage
+        .from('bills')
+        .download(bill.storage_path);
+      if (downloadError || !fileBlob) return json({ error: 'Could not download bill file' }, 500);
 
-    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
-    let extracted: ExtractedBill;
-    let mode: 'claude' | 'mock' = 'mock';
-    if (apiKey) {
-      try {
-        extracted = await callClaude(apiKey, mimeType, base64);
-        mode = 'claude';
-      } catch (error) {
-        console.error('Claude extraction failed, falling back to mock extraction', error);
+      const mimeType = fileBlob.type || guessMimeTypeFromPath(bill.storage_path);
+      const bytes = new Uint8Array(await fileBlob.arrayBuffer());
+      const base64 = base64Encode(bytes);
+
+      const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
+      let extracted: ExtractedBill;
+      let mode: 'claude' | 'mock' = 'mock';
+      if (apiKey) {
+        try {
+          extracted = await callClaude(apiKey, mimeType, base64);
+          mode = 'claude';
+        } catch (error) {
+          console.error('Claude extraction failed, falling back to mock extraction', error);
+          extracted = mockExtraction();
+        }
+      } else {
         extracted = mockExtraction();
       }
-    } else {
-      extracted = mockExtraction();
+
+      const { error: updateError } = await supabase
+        .from('bills')
+        .update({
+          extracted_json: { ...extracted, _mode: mode },
+          merchant_name: extracted.merchant_name,
+          bill_date: extracted.bill_date,
+          total_amount: extracted.total_amount,
+          currency: extracted.currency || 'INR',
+          category: extracted.category_guess,
+          is_warranty_document: extracted.is_warranty_document,
+          is_insurance_document: extracted.is_insurance_document,
+        })
+        .eq('id', billId);
+      if (updateError) return json({ error: 'Could not save extraction result' }, 500);
+
+      return json({ billId, extracted, mode });
+    } catch (error) {
+      console.error('parse-bill error', error);
+      return json({ error: error instanceof Error ? error.message : 'Unknown error' }, 500);
     }
+  };
+}
 
-    const { error: updateError } = await supabase
-      .from('bills')
-      .update({
-        extracted_json: { ...extracted, _mode: mode },
-        merchant_name: extracted.merchant_name,
-        bill_date: extracted.bill_date,
-        total_amount: extracted.total_amount,
-        currency: extracted.currency || 'INR',
-        category: extracted.category_guess,
-        is_warranty_document: extracted.is_warranty_document,
-        is_insurance_document: extracted.is_insurance_document,
-      })
-      .eq('id', billId);
-    if (updateError) return json({ error: 'Could not save extraction result' }, 500);
+export const handler = createHandler();
 
-    return json({ billId, extracted, mode });
-  } catch (error) {
-    console.error('parse-bill error', error);
-    return json({ error: error instanceof Error ? error.message : 'Unknown error' }, 500);
-  }
-});
+if (import.meta.main) Deno.serve(handler);

@@ -42,5 +42,8 @@ yarn-error.*
 .vscode/
 .idea/
 
+# Claude Code local state
+.claude/
+
 # TypeScript
 *.tsbuildinfo

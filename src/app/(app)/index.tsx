@@ -1,18 +1,23 @@
 import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
+import { useAuth } from '@/features/auth/AuthProvider';
 
-export default function IndexScreen() {
+export default function HomeScreen() {
+  const { profile, signOut } = useAuth();
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title">Bill Organizer</ThemedText>
+        <ThemedText type="title">Hi{profile?.name ? `, ${profile.name}` : ''}</ThemedText>
         <ThemedText type="default">
-          Capture, track, and never miss a warranty or renewal again.
+          Your bills, analytics, and reminders will show up here.
         </ThemedText>
+        <PrimaryButton title="Log out" onPress={signOut} style={styles.button} />
       </SafeAreaView>
     </ThemedView>
   );
@@ -28,5 +33,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.two,
     paddingHorizontal: Spacing.four,
+  },
+  button: {
+    marginTop: Spacing.four,
+    alignSelf: 'stretch',
   },
 });

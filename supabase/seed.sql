@@ -17,7 +17,11 @@ insert into
     created_at,
     updated_at,
     raw_app_meta_data,
-    raw_user_meta_data
+    raw_user_meta_data,
+    confirmation_token,
+    recovery_token,
+    email_change_token_new,
+    email_change
   )
 values
   (
@@ -31,7 +35,11 @@ values
     now(),
     now(),
     '{"provider":"email","providers":["email"]}',
-    '{}'
+    '{}',
+    '',
+    '',
+    '',
+    ''
   );
 
 update public.profiles

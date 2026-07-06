@@ -37,6 +37,7 @@ supabase/functions/{parse-bill,whatsapp-webhook,send-reminders}/
 - `npx expo prebuild` — regenerate native iOS/Android projects after config plugin changes
 - `npx expo run:ios` / `npx expo run:android` — build & run on simulator/emulator
   - Android native build (CMake/Ninja for `react-native-worklets`/`react-native-screens`) fails on JDK 24+ (`WARNING: A restricted method in java.lang.System has been called`). Use a JDK 17–21 — Android Studio's bundled JBR works and needs no separate install: `export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"` before `npx expo run:android`.
+  - `expo prebuild` regenerates `android/` from scratch and does not recreate `android/local.properties`, so a fresh prebuild + `run:android` fails with "SDK location not found". Fix: `export ANDROID_HOME="$HOME/Library/Android/sdk"` and `echo "sdk.dir=$ANDROID_HOME" > android/local.properties` before building.
 - `supabase start` — start local Postgres/Auth/Storage/Studio
 - `supabase db reset` — apply all migrations fresh (destructive to local data only)
 - `supabase functions serve` — run edge functions locally

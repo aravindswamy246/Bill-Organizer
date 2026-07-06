@@ -55,6 +55,11 @@ export default function HomeScreen() {
                 Analytics
               </ThemedText>
             </Pressable>
+            <Pressable onPress={() => router.push('/(app)/reminders')} hitSlop={Spacing.two}>
+              <ThemedText type="link" themeColor="textSecondary">
+                Reminders
+              </ThemedText>
+            </Pressable>
             <Pressable onPress={signOut} hitSlop={Spacing.two}>
               <ThemedText type="link" themeColor="textSecondary">
                 Log out

@@ -37,6 +37,12 @@
       ],
       "expo-secure-store",
       [
+        "expo-notifications",
+        {
+          "color": "#208AEF"
+        }
+      ],
+      [
         "expo-share-intent",
         {
           "iosActivationRules": {

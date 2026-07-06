@@ -13,10 +13,16 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { parseBill } from '@/features/bills/parseBill';
 import { BILL_CATEGORIES, type Bill, type BillCategory } from '@/features/bills/types';
+import { useEntitlements } from '@/features/paywall/useEntitlements';
 import { useTheme } from '@/hooks/use-theme';
 import { supabase } from '@/lib/supabase';
+import { cancelReminderNotifications, scheduleReminderNotifications } from '@/lib/notifications';
 
 const EXPIRY_CATEGORIES: readonly BillCategory[] = ['Warranty', 'Insurance'];
+
+/** Free tier: at most this many active warranty/insurance reminders at
+ * once — a 3rd triggers the paywall (prompt.md §5). */
+const FREE_ACTIVE_REMINDER_LIMIT = 2;
 
 type LineItemRow = { description: string; amount: string };
 
@@ -26,6 +32,7 @@ export default function BillDetailScreen() {
   const router = useRouter();
   const theme = useTheme();
   const queryClient = useQueryClient();
+  const { isPremium } = useEntitlements();
 
   const [loading, setLoading] = useState(true);
   const [parsing, setParsing] = useState(false);
@@ -187,36 +194,78 @@ export default function BillDetailScreen() {
       }
 
       const trimmedExpiry = expiryDate.trim();
+      let reminderPaywallTriggered = false;
       if (needsExpiry && trimmedExpiry) {
         const { data: existingReminder } = await supabase
           .from('reminders')
           .select('id')
           .eq('bill_id', billId)
           .maybeSingle();
+
         if (existingReminder) {
           const { error: reminderError } = await supabase
             .from('reminders')
             .update({ expiry_date: trimmedExpiry, active: true })
             .eq('id', existingReminder.id);
           if (reminderError) throw reminderError;
-        } else {
-          const { error: reminderError } = await supabase.from('reminders').insert({
-            bill_id: billId,
-            user_id: user.id,
-            expiry_date: trimmedExpiry,
+          await scheduleReminderNotifications({
+            reminderId: existingReminder.id,
+            merchantName: trimmedMerchant,
+            expiryDate: trimmedExpiry,
           });
-          if (reminderError) throw reminderError;
+        } else {
+          let canCreate = true;
+          if (!isPremium) {
+            const { count, error: countError } = await supabase
+              .from('reminders')
+              .select('id', { count: 'exact', head: true })
+              .eq('user_id', user.id)
+              .eq('active', true);
+            if (countError) throw countError;
+            canCreate = (count ?? 0) < FREE_ACTIVE_REMINDER_LIMIT;
+          }
+
+          if (canCreate) {
+            const { data: inserted, error: reminderError } = await supabase
+              .from('reminders')
+              .insert({ bill_id: billId, user_id: user.id, expiry_date: trimmedExpiry })
+              .select('id')
+              .single();
+            if (reminderError) throw reminderError;
+            await scheduleReminderNotifications({
+              reminderId: inserted.id,
+              merchantName: trimmedMerchant,
+              expiryDate: trimmedExpiry,
+            });
+          } else {
+            reminderPaywallTriggered = true;
+          }
         }
       } else {
-        const { error: reminderDeleteError } = await supabase
+        const { data: deletedReminders, error: reminderDeleteError } = await supabase
           .from('reminders')
           .delete()
-          .eq('bill_id', billId);
+          .eq('bill_id', billId)
+          .select('id');
         if (reminderDeleteError) throw reminderDeleteError;
+        await Promise.all(
+          (deletedReminders ?? []).map((reminder) => cancelReminderNotifications(reminder.id)),
+        );
       }
 
       await queryClient.invalidateQueries({ queryKey: ['bills'] });
-      router.replace('/(app)');
+      await queryClient.invalidateQueries({ queryKey: ['reminders'] });
+
+      if (reminderPaywallTriggered) {
+        // TODO(Phase 11): replace with navigation to the real RevenueCat paywall screen.
+        Alert.alert(
+          'Bill saved',
+          `The bill saved, but you already have ${FREE_ACTIVE_REMINDER_LIMIT} active reminders on the free plan. Upgrade to Premium for unlimited reminders — this bill won't get expiry alerts until then.`,
+          [{ text: 'OK', onPress: () => router.replace('/(app)') }],
+        );
+      } else {
+        router.replace('/(app)');
+      }
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Could not save this bill.');
     } finally {

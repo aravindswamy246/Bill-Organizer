@@ -49,11 +49,18 @@ export default function HomeScreen() {
           <ThemedText type="title" style={styles.title}>
             Hi{profile?.name ? `, ${profile.name}` : ''}
           </ThemedText>
-          <Pressable onPress={signOut} hitSlop={Spacing.two}>
-            <ThemedText type="link" themeColor="textSecondary">
-              Log out
-            </ThemedText>
-          </Pressable>
+          <ThemedView style={styles.headerLinks}>
+            <Pressable onPress={() => router.push('/(app)/analytics')} hitSlop={Spacing.two}>
+              <ThemedText type="link" themeColor="textSecondary">
+                Analytics
+              </ThemedText>
+            </Pressable>
+            <Pressable onPress={signOut} hitSlop={Spacing.two}>
+              <ThemedText type="link" themeColor="textSecondary">
+                Log out
+              </ThemedText>
+            </Pressable>
+          </ThemedView>
         </ThemedView>
 
         <TextInput
@@ -140,6 +147,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  headerLinks: {
+    flexDirection: 'row',
+    gap: Spacing.three,
     backgroundColor: 'transparent',
   },
   title: {

@@ -47,3 +47,12 @@ yarn-error.*
 
 # TypeScript
 *.tsbuildinfo
+
+# Loop scaffold local state
+.loop/.block_count
+.loop/.questions_hash
+.loop/config.env
+
+# Markdown docs — keep only the root README tracked in git
+*.md
+!/README.md

@@ -2,7 +2,7 @@
 
 A React Native (iOS + Android) app, built with Expo, that captures bills/receipts (camera, OS share-sheet, or WhatsApp forward), parses them with a vision LLM, categorizes them, and tracks warranty/insurance expiries with reminders — plus a spend analytics dashboard.
 
-See `prompt.md` for the full product spec and `CLAUDE.md` for architecture, conventions, and setup notes.
+See `prompt.md` for the full product spec and `CLAUDE.md` for architecture, conventions, and setup notes. For a full breakdown of the current implementation (architecture, database, edge functions, every feature, testing, and security), see [`docs/README.md`](docs/README.md).
 
 ## Get started
 

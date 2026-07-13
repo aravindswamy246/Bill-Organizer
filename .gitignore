@@ -47,3 +47,8 @@ yarn-error.*
 
 # TypeScript
 *.tsbuildinfo
+.loop/progress.md
+.loop/questions.md
+.loop/.block_count
+.loop/.questions_hash
+.loop/config.env

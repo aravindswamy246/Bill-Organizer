@@ -5,7 +5,7 @@ A React Native (iOS + Android) mobile app, built with Expo, for the Indian marke
 
 Full product spec: see `prompt.md` in the repo root. Do not duplicate that spec here — read it for feature detail; this file is about how to work in this codebase.
 
-@AGENTS.md
+**Expo HAS CHANGED**: read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before writing any code. (Was `AGENTS.md`.)
 
 ## Key product decisions (deviate from prompt.md only here)
 - **Auth is email/password** via Supabase Auth, NOT phone OTP. Phone number is still collected during profile setup — it remains the identity key used to match inbound WhatsApp Business messages to a user account.

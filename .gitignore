@@ -49,9 +49,7 @@ yarn-error.*
 *.tsbuildinfo
 
 # Loop scaffold local state
-.loop/.block_count
-.loop/.questions_hash
-.loop/config.env
+.loop/
 
 # Markdown docs — keep only the root README tracked in git
 *.md

@@ -4,9 +4,18 @@ import * as Sharing from 'expo-sharing';
 
 import type { Bill } from '@/features/bills/types';
 
+// OWASP CSV-injection trigger set: a field opened by Excel/Sheets that starts with one of
+// these characters (or a leading tab/CR) is interpreted as a formula, not text. Prefixing it
+// with an apostrophe forces text interpretation. Plain signed decimal numbers (e.g. the
+// negative amounts formatAmount can produce, like '-1234.50') are exempted so legitimate data
+// isn't mangled — only non-numeric values starting with a trigger character get the apostrophe.
+const CSV_FORMULA_TRIGGER = /^[=+\-@\t\r]/;
+const PLAIN_SIGNED_NUMBER = /^[+-]?\d+(\.\d+)?$/;
+
 export function csvEscape(value: string): string {
-  if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
-  return value;
+  const safe = CSV_FORMULA_TRIGGER.test(value) && !PLAIN_SIGNED_NUMBER.test(value) ? `'${value}` : value;
+  if (/[",\n\r]/.test(safe)) return `"${safe.replace(/"/g, '""')}"`;
+  return safe;
 }
 
 export function formatAmount(bill: Bill): string {

@@ -38,6 +38,42 @@ describe('csvEscape', () => {
   it('quotes values containing newlines', () => {
     expect(csvEscape('line1\nline2')).toBe('"line1\nline2"');
   });
+
+  it('neutralises a leading-equals formula with an apostrophe', () => {
+    expect(csvEscape('=1+1')).toBe("'=1+1");
+  });
+
+  it('neutralises a leading-plus formula with an apostrophe', () => {
+    expect(csvEscape('+SUM(A1)')).toBe("'+SUM(A1)");
+  });
+
+  it('neutralises a leading-at formula with an apostrophe', () => {
+    expect(csvEscape('@import')).toBe("'@import");
+  });
+
+  it('neutralises a leading-minus formula with an apostrophe', () => {
+    expect(csvEscape('-cmd')).toBe("'-cmd");
+  });
+
+  it('neutralises a leading-tab value with an apostrophe', () => {
+    expect(csvEscape('\tmalicious')).toBe("'\tmalicious");
+  });
+
+  it('neutralises a leading-CR value and quotes it so the row cannot split', () => {
+    expect(csvEscape('\rmalicious')).toBe("\"'\rmalicious\"");
+  });
+
+  it('leaves a plain negative amount unchanged', () => {
+    expect(csvEscape('-1234.50')).toBe('-1234.50');
+  });
+
+  it('leaves a plain positive number unchanged', () => {
+    expect(csvEscape('1234.50')).toBe('1234.50');
+  });
+
+  it('applies both the apostrophe prefix and comma/quote escaping to a formula containing a comma', () => {
+    expect(csvEscape('=HYPERLINK("a","b")')).toBe('"\'=HYPERLINK(""a"",""b"")"');
+  });
 });
 
 describe('formatAmount', () => {
@@ -66,6 +102,11 @@ describe('billsToCsv', () => {
   it('falls back to empty strings for null date/merchant', () => {
     const csv = billsToCsv([makeBill({ bill_date: null, merchant_name: null })]);
     expect(csv.split('\n')[1]).toBe(',,Utilities,1234.50,INR,confirmed,camera');
+  });
+
+  it('neutralises a formula-injection merchant name', () => {
+    const csv = billsToCsv([makeBill({ merchant_name: '=cmd|\' /C calc\'!A1' })]);
+    expect(csv.split('\n')[1]).toBe("2026-07-01,'=cmd|' /C calc'!A1,Utilities,1234.50,INR,confirmed,camera");
   });
 });
 

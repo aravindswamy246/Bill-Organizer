@@ -171,6 +171,90 @@ Deno.test('uses the real extraction when Claude returns a tool_use block', async
   }
 });
 
+Deno.test('an unknown VISION_PROVIDER value falls back to mock extraction without throwing', async () => {
+  Deno.env.set('VISION_PROVIDER', 'not-a-real-provider');
+  Deno.env.set('ANTHROPIC_API_KEY', 'test-key');
+  try {
+    const fileBlob = new Blob(['fake image bytes'], { type: 'image/jpeg' });
+    const { client, updates } = fakeClient({
+      bill: { id: 'bill-1', storage_path: 'user-1/bill-1.jpg' },
+      fileBlob,
+    });
+    const handler = createHandler(() => client);
+    const res = await handler(req({ billId: 'bill-1' }, { Authorization: 'Bearer token' }));
+    assertEquals(res.status, 200);
+    const body = await res.json();
+    assertEquals(body.mode, 'mock');
+    assertEquals(body.extracted, mockExtraction());
+    assertEquals(updates.length, 1);
+  } finally {
+    Deno.env.delete('VISION_PROVIDER');
+    Deno.env.delete('ANTHROPIC_API_KEY');
+  }
+});
+
+Deno.test('default provider (VISION_PROVIDER unset) with no ANTHROPIC_API_KEY yields mock mode', async () => {
+  Deno.env.delete('VISION_PROVIDER');
+  Deno.env.delete('ANTHROPIC_API_KEY');
+  const fileBlob = new Blob(['fake image bytes'], { type: 'image/jpeg' });
+  const { client, updates } = fakeClient({
+    bill: { id: 'bill-1', storage_path: 'user-1/bill-1.jpg' },
+    fileBlob,
+  });
+  const handler = createHandler(() => client);
+  const res = await handler(req({ billId: 'bill-1' }, { Authorization: 'Bearer token' }));
+  assertEquals(res.status, 200);
+  const body = await res.json();
+  assertEquals(body.mode, 'mock');
+  assertEquals(updates[0].category, 'Other');
+});
+
+Deno.test('VISION_PROVIDER=anthropic with a configured key and stubbed fetch still returns mode claude', async () => {
+  Deno.env.set('VISION_PROVIDER', 'anthropic');
+  Deno.env.set('ANTHROPIC_API_KEY', 'test-key');
+  const extracted = {
+    merchant_name: 'Reliance Digital',
+    bill_date: '2026-08-01',
+    total_amount: 1999,
+    currency: 'INR',
+    category_guess: 'Warranty',
+    line_items: [],
+    is_warranty_document: true,
+    is_insurance_document: false,
+    detected_expiry_date: '2027-08-01',
+    confidence: 'high',
+  };
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (() =>
+    Promise.resolve(
+      new Response(
+        JSON.stringify({ content: [{ type: 'tool_use', name: 'extract_bill', input: extracted }] }),
+        { status: 200 },
+      ),
+    )) as typeof fetch;
+  try {
+    const fileBlob = new Blob(['fake image bytes'], { type: 'image/jpeg' });
+    const { client, updates } = fakeClient({
+      bill: { id: 'bill-1', storage_path: 'user-1/bill-1.jpg' },
+      fileBlob,
+    });
+    const handler = createHandler(() => client);
+    const res = await handler(req({ billId: 'bill-1' }, { Authorization: 'Bearer token' }));
+    assertEquals(res.status, 200);
+    const body = await res.json();
+    // The provider is registered under the name 'anthropic', but mode is
+    // still reported as 'claude' for backward compatibility with
+    // already-stored extraction rows — see index.ts.
+    assertEquals(body.mode, 'claude');
+    assertEquals(body.extracted.merchant_name, 'Reliance Digital');
+    assertEquals(updates[0].category, 'Warranty');
+  } finally {
+    globalThis.fetch = originalFetch;
+    Deno.env.delete('VISION_PROVIDER');
+    Deno.env.delete('ANTHROPIC_API_KEY');
+  }
+});
+
 Deno.test('callClaude throws when Claude does not return a tool_use block', async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = (() =>

@@ -14,10 +14,12 @@
 // No other file needs to change — index.ts only ever calls
 // getVisionProvider() and, if it returns non-null, provider.extract().
 import { anthropicProvider } from './anthropic.ts';
+import { sarvamProvider } from './sarvam.ts';
 import type { VisionProvider } from './types.ts';
 
 const providers: Record<string, VisionProvider> = {
   anthropic: anthropicProvider,
+  sarvam: sarvamProvider,
 };
 
 const DEFAULT_PROVIDER = 'anthropic';
